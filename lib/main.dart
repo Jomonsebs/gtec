@@ -1,9 +1,15 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:gtech/dashboard.dart';
+import 'package:gtech/admin/dashboard.dart';
+import 'package:gtech/firebase_options.dart';
 import 'package:gtech/login.dart';
+import 'package:gtech/user/videosection.dart';
 
-void main() {
-  runApp(const MyApp());
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -14,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
     
-      home: DashboardScreen(),
+      home: LoginPage(),
     );
   }
 }

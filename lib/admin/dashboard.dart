@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-
-import 'package:gtech/adminpanel.dart';
-import 'package:gtech/coursehome.dart';
-import 'package:gtech/modules.dart';
+import 'package:gtech/admin/adcourseadmin.dart';
+import 'package:gtech/admin/adminpanel.dart';
+import 'package:gtech/admin/coursehome.dart';
+import 'package:gtech/admin/liveclassadmin.dart';
+import 'package:gtech/admin/studentmanager.dart';
+import 'package:gtech/user/modules.dart';
+import 'package:gtech/registration.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -12,6 +15,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   String selectedContent = 'Course Content';
   TextEditingController searchController = TextEditingController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void updateContent(String newContent) {
     setState(() {
@@ -19,19 +23,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void handleMenuSelection(String value) {
+    if (value == 'Settings') {
+      updateContent('Settings');
+    } else if (value == 'Sign Out') {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => RegistrationPage()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLargeScreen = MediaQuery.of(context).size.width >= 700;
+
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.grey[200],
+      appBar: isLargeScreen
+          ? null
+          : AppBar(
+              title: Text('Dashboard'),
+              leading: IconButton(
+                icon: Icon(Icons.menu),
+                onPressed: () => _scaffoldKey.currentState!.openDrawer(),
+              ),
+              actions: [
+                PopupMenuButton<String>(
+                  onSelected: handleMenuSelection,
+                  itemBuilder: (BuildContext context) {
+                    return {'Settings', 'Sign Out'}.map((String choice) {
+                      return PopupMenuItem<String>(
+                        value: choice,
+                        child: Text(choice),
+                      );
+                    }).toList();
+                  },
+                ),
+              ],
+            ),
+      drawer: isLargeScreen
+          ? null
+          : Drawer(
+              child: Sidebar(
+                isLargeScreen: isLargeScreen,
+                onMenuItemSelected: (menu) {
+                  updateContent(menu);
+                },
+                searchController: searchController,
+              ),
+            ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Row(
             children: [
-              Sidebar(
+              if (isLargeScreen)
+                Sidebar(
+                  isLargeScreen: isLargeScreen,
                   onMenuItemSelected: updateContent,
-                  searchController: searchController),
+                  searchController: searchController,
+                ),
               Expanded(
                 child: ContentArea(
+                  isLargeScreen: isLargeScreen,
                   selectedContent: selectedContent,
                   searchController: searchController,
                 ),
@@ -47,16 +99,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 class Sidebar extends StatelessWidget {
   final Function(String) onMenuItemSelected;
   final TextEditingController searchController;
+  final bool isLargeScreen;
 
-  Sidebar({required this.onMenuItemSelected, required this.searchController});
+  Sidebar({required this.onMenuItemSelected, required this.searchController, required this.isLargeScreen});
 
   @override
   Widget build(BuildContext context) {
+    final sidebarWidth = isLargeScreen ? 300.0 : MediaQuery.of(context).size.width * 0.8;
+
     return Card(
       elevation: 4,
       child: Container(
         color: Colors.white,
-        width: MediaQuery.of(context).size.width < 700 ? double.infinity : 300,
+        width: sidebarWidth,
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,25 +120,27 @@ class Sidebar extends StatelessWidget {
             SizedBox(height: 20),
             SearchField(searchController: searchController),
             SizedBox(height: 20),
-            // Make only MainMenu scrollable
             Expanded(
               child: SingleChildScrollView(
-                child: MainMenu(onMenuItemSelected: onMenuItemSelected),
+                child: MainMenu(
+                  isLargeScreen: isLargeScreen,
+                  onMenuItemSelected: onMenuItemSelected,
+                ),
               ),
             ),
             SidebarButton(
               icon: Icons.settings,
               text: 'Settings',
-              isSelected: false, // Update this if needed
+              isSelected: false,
               onTap: () => onMenuItemSelected('Settings'),
             ),
             SidebarButton(
               icon: Icons.logout,
               text: 'Sign Out',
-              isSelected: false, // Update this if needed
+              isSelected: false,
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Adminpanel()),
+                MaterialPageRoute(builder: (context) => RegistrationPage()),
               ),
             ),
           ],
@@ -92,6 +149,9 @@ class Sidebar extends StatelessWidget {
     );
   }
 }
+
+// The rest of your classes (UserCard, SearchField, MainMenu, SidebarButton, ContentArea) remain unchanged
+
 
 class UserCard extends StatelessWidget {
   @override
@@ -214,8 +274,9 @@ class SearchField extends StatelessWidget {
 
 class MainMenu extends StatefulWidget {
   final Function(String) onMenuItemSelected;
+  final bool isLargeScreen;  // Accepting isLargeScreen
 
-  MainMenu({required this.onMenuItemSelected});
+  MainMenu({required this.onMenuItemSelected, required this.isLargeScreen});
 
   @override
   _MainMenuState createState() => _MainMenuState();
@@ -250,62 +311,56 @@ class _MainMenuState extends State<MainMenu> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-            child: Text(
-              'Main Menu',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              overflow: TextOverflow.ellipsis,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+              child: Text(
+                'Main Menu',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          SidebarButton(
-            icon: Icons.home,
-            text: 'Dashboard',
-            isSelected: selectedMenu == 'Dashboard',
-            onTap: () => updateSelectedMenu('Dashboard'),
-          ),
-          _buildExpandableTile(
-            icon: Icons.school,
-            title: 'Course Management',
-            children: [
-              'Add New Course',
-              'Manage Course',
-              'Course Bundle',
-            ],
-            onMenuItemSelected: updateSelectedMenu,
-          ),
-          _buildExpandableTile(
-            icon: Icons.quiz,
-            title: 'Quiz Management',
-            children: [
-              'Add New Quiz',
-              'Manage Quiz',
-              'Quiz Overview',
-            ],
-            onMenuItemSelected: updateSelectedMenu,
-          ),
-          SidebarButton(
-            icon: Icons.priority_high,
-            text: 'Roles Manager',
-            isSelected: selectedMenu == 'Roles Manager',
-            onTap: () => updateSelectedMenu('Roles Manager'),
-          ),
-          SidebarButton(
-            icon: Icons.person,
-            text: 'Our Centers',
-            isSelected: selectedMenu == 'Our Centers',
-            onTap: () => updateSelectedMenu('Our Centers'),
-          ),
-          SidebarButton(
-            icon: Icons.list,
-            text: 'Students List',
-            isSelected: selectedMenu == 'Students List',
-            onTap: () => updateSelectedMenu('Students List'),
-          ),
-        ],
+            SidebarButton(
+              icon: Icons.home,
+              text: 'Dashboard',
+              isSelected: selectedMenu == 'Dashboard',
+              onTap: () => updateSelectedMenu('Dashboard'),
+            ),
+              SidebarButton(
+              icon: Icons.home,
+              text: 'Course Management',
+              isSelected: selectedMenu == 'Course Management',
+              onTap: () => updateSelectedMenu('Course Management'),
+            ),
+                SidebarButton(
+              icon: Icons.home,
+              text: 'live',
+              isSelected: selectedMenu == 'live',
+              onTap: () => updateSelectedMenu('live'),
+            ),
+            SidebarButton(
+              icon: Icons.priority_high,
+              text: 'Students Manager',
+              isSelected: selectedMenu == 'Students Manager',
+              onTap: () => updateSelectedMenu('Students Manager'),
+            ),
+            SidebarButton(
+              icon: Icons.person,
+              text: 'Our Centers',
+              isSelected: selectedMenu == 'Our Centers',
+              onTap: () => updateSelectedMenu('Our Centers'),
+            ),
+            SidebarButton(
+              icon: Icons.list,
+              text: 'Students List',
+              isSelected: selectedMenu == 'Students List',
+              onTap: () => updateSelectedMenu('Students List'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -313,48 +368,38 @@ class _MainMenuState extends State<MainMenu> {
   ExpansionTile _buildExpandableTile({
     required IconData icon,
     required String title,
+    required bool isSelected,
     required List<String> children,
     required Function(String) onMenuItemSelected,
+    required bool isLargeScreen,
   }) {
-    bool isExpanded = selectedMenu == title;
-
     return ExpansionTile(
-      leading: Icon(icon, color: isExpanded ? Colors.blue : Colors.blueGrey),
+      leading: Icon(icon, color: isSelected ? Colors.blue : Colors.blueGrey),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
-          color: isExpanded ? Colors.blue : const Color.fromARGB(136, 0, 0, 0),
+          color: isSelected ? Colors.blue : const Color.fromARGB(136, 0, 0, 0),
         ),
       ),
-      initiallyExpanded: isExpanded,
+      initiallyExpanded: isLargeScreen || isSelected,
       onExpansionChanged: (expanded) {
-        if (expanded) updateSelectedMenu(title);
+        if (expanded) onMenuItemSelected(title);
       },
-      tilePadding:
-          EdgeInsets.symmetric(horizontal: 16.0), // Adjust padding as needed
-      childrenPadding:
-          EdgeInsets.only(left: 32.0), // Padding for the child items
-      collapsedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-            color: Colors.transparent), // Remove top and bottom lines
-      ),
-      children: children.map((child) {
+      tilePadding: EdgeInsets.symmetric(horizontal: 16),
+      children: children.map((item) {
         return SidebarButton(
           icon: Icons.arrow_right,
-          text: child,
-          isSelected: selectedMenu == child,
-          onTap: () => onMenuItemSelected(child),
+          text: item,
+          isSelected: false,
+          onTap: () => onMenuItemSelected(item),
         );
       }).toList(),
     );
   }
 }
+
 
 class SidebarButton extends StatelessWidget {
   final IconData icon;
@@ -400,13 +445,12 @@ class SidebarButton extends StatelessWidget {
     );
   }
 }
-
 class ContentArea extends StatelessWidget {
   final String selectedContent;
   final TextEditingController searchController;
+  final bool isLargeScreen;  // Accepting isLargeScreen
 
-  const ContentArea(
-      {required this.selectedContent, required this.searchController});
+  const ContentArea({required this.selectedContent, required this.searchController, required this.isLargeScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -434,14 +478,14 @@ class ContentArea extends StatelessWidget {
     switch (selectedContent) {
       case 'Course Content':
         return Dash();
-      case 'Priority Task':
-        return ModulesList();
-      case 'Contact Program Manager':
-        return Center(child: Text('Contact details go here.'));
-      case 'Raise a Pause Request':
-        return Center(child: Text('Pause request form goes here.'));
+      case 'Course Management':
+        return AdminCourse();
+      case 'Students Manager':
+        return AdminRegisteredStudentsPage();
+      case 'live':
+        return AdminLiveClassesPage();
       case 'Dashboard':
-        return Dash();
+        return AdminCourse();
       default:
         return Center(child: Text('Select a menu item.'));
     }
