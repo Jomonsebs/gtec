@@ -38,6 +38,7 @@ class _AdminRegisteredStudentsPageState
         'enrollmentDate': FieldValue.serverTimestamp(),
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Course added successfully!')));
+      setState(() {}); // Refresh the UI after adding the course
     } catch (e) {
       print('Error adding course: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add course: $e')));
@@ -49,9 +50,22 @@ class _AdminRegisteredStudentsPageState
     try {
       await _firestore.collection('users').doc(uid).collection('courses').doc(courseId).delete();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Course removed successfully!')));
+      setState(() {}); // Refresh the UI after removing the course
     } catch (e) {
       print('Error removing course: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to remove course: $e')));
+    }
+  }
+
+  // Delete a user
+  Future<void> _deleteUser(String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('User deleted successfully!')));
+      setState(() {}); // Refresh the UI after deleting the user
+    } catch (e) {
+      print('Error deleting user: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete user: $e')));
     }
   }
 
@@ -86,7 +100,7 @@ class _AdminRegisteredStudentsPageState
                 },
                 items: courseNames.map((courseName) {
                   return DropdownMenuItem<String>(
-                    value: courseIds[courseNames.indexOf(courseName)], // Correctly use courseId
+                    value: courseIds[courseNames.indexOf(courseName)],
                     child: Text(courseName),
                   );
                 }).toList(),
@@ -98,7 +112,7 @@ class _AdminRegisteredStudentsPageState
               onPressed: () {
                 if (selectedCourse != null) {
                   _addCourseToStudent(studentUid, selectedCourse!);
-                  Navigator.pop(context);
+                  Navigator.pop(context); // Close the dialog after adding the course
                 }
               },
               child: const Text('Add Course'),
@@ -163,7 +177,7 @@ class _AdminRegisteredStudentsPageState
               onPressed: () {
                 if (selectedCourse != null) {
                   _removeCourseFromStudent(studentUid, selectedCourse!);
-                  Navigator.pop(context);
+                  Navigator.pop(context); // Close the dialog after removing the course
                 }
               },
               child: const Text('Remove Course'),
@@ -197,7 +211,7 @@ class _AdminRegisteredStudentsPageState
                 final student = students[index].data() as Map<String, dynamic>;
                 final studentUid = students[index].id; // This is the user's UID
                 final studentEmail = student['email'] ?? 'Unknown User';
-                final studentName = student['name'] ?? 'No name'; 
+                final studentName = student['name'] ?? 'No name';
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 10),
@@ -220,44 +234,62 @@ class _AdminRegisteredStudentsPageState
                           }
                         }
 
-                        return Column(
+                        return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(studentEmail, style: Theme.of(context).textTheme.titleLarge),
-                            Text('Name: $studentName', style: TextStyle(color: Colors.grey[600])),
-                            FutureBuilder<List<String>>(
-                              future: Future.wait(courseNames),
-                              builder: (context, courseNamesSnapshot) {
-                                if (courseNamesSnapshot.connectionState == ConnectionState.waiting) {
-                                  return const CircularProgressIndicator();
-                                }
+                            Expanded(child: Text(studentName)),
+                            SizedBox(width: 10),
+                            Expanded(child: Text(studentEmail)),
+                            SizedBox(width: 10),
+                            Expanded(
+                              flex: 2,
+                              child: FutureBuilder<List<String>>(
+                                future: Future.wait(courseNames),
+                                builder: (context, courseNamesSnapshot) {
+                                  if (courseNamesSnapshot.connectionState == ConnectionState.waiting) {
+                                    return const CircularProgressIndicator();
+                                  }
 
-                                if (courseNamesSnapshot.hasData) {
-                                  final courseNamesList = courseNamesSnapshot.data ?? [];
-                                  return Text('Enrolled in: ${courseNamesList.isNotEmpty ? courseNamesList.join(", ") : 'No courses'}', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey[600]));
-                                } else {
-                                  return const Text('Error loading courses');
-                                }
-                              },
+                                  if (courseNamesSnapshot.hasData && courseNamesSnapshot.data != null) {
+                                    final courses = courseNamesSnapshot.data!;
+                                    return Text(courses.join(', '));
+                                  }
+                                  return const Text('No courses');
+                                },
+                              ),
                             ),
-                            ButtonBar(
-                              alignment: MainAxisAlignment.end,
-                              children: [
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Add Course'),
-                                  onPressed: () {
-                                    _showAddCourseDialog(context, studentUid);
-                                  },
+                            Expanded(
+                              child: TextButton(
+                                onPressed: () {
+                                  _showAddCourseDialog(context, studentUid);
+                                },
+                                child: const Text(
+                                  'Add Course',
+                                  style: TextStyle(color: Colors.blue),
                                 ),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.remove),
-                                  label: const Text('Remove Course'),
-                                  onPressed: () {
-                                    _showRemoveCourseDialog(context, studentUid);
-                                  },
+                              ),
+                            ),
+                            Expanded(
+                              child: TextButton(
+                                onPressed: () {
+                                  _showRemoveCourseDialog(context, studentUid);
+                                },
+                                child: const Text(
+                                  'Remove Course',
+                                  style: TextStyle(color: Colors.red),
                                 ),
-                              ],
+                              ),
+                            ),
+                             Expanded(
+                              child: TextButton(
+                                onPressed: () {
+                                  _deleteUser(studentUid);
+                                },
+                                child: const Text(
+                                  'Delete User',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
                             ),
                           ],
                         );

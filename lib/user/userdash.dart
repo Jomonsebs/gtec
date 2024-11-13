@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:gtech/login.dart';
 import 'package:gtech/registration.dart';
 import 'package:gtech/user/liveclass.dart';
 import 'package:gtech/user/modules.dart';
@@ -148,10 +150,11 @@ class Sidebar extends StatelessWidget {
   }
 }
 
+
+
 class UserCard extends StatelessWidget {
   final String userId;
 
-  // Accept userId as a parameter to fetch user data
   UserCard({required this.userId});
 
   Future<Map<String, String>> _fetchUserData(String userId) async {
@@ -165,12 +168,20 @@ class UserCard extends StatelessWidget {
           'role': data['role'] ?? 'student',
         };
       } else {
-        return {'name': 'Name', 'email': 'No Email', 'role': ' student'};
+        return {'name': 'Name', 'email': 'No Email', 'role': 'student'};
       }
     } catch (e) {
       print('Error fetching user data: $e');
       return {'name': 'Name', 'email': 'Email', 'role': 'student'};
     }
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()), // Replace with actual login page
+    );
   }
 
   @override
@@ -184,50 +195,70 @@ class UserCard extends StatelessWidget {
           return Text('Error loading user data');
         } else if (snapshot.hasData) {
           final userData = snapshot.data!;
-          return Card(
-            elevation: 3,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.black,
-                    child: Icon(Icons.person, color: Colors.white, size: 20),
-                  ),
-                  SizedBox(width: 12),
-                  Column(
+          return Column(
+            children: [
+              Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        userData['name']!,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
-                        overflow: TextOverflow.ellipsis,
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.black,
+                        child: Icon(Icons.person, color: Colors.white, size: 20),
                       ),
-                      Text(
-                        userData['email']!,
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue[50],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                        child: Text(
-                          userData['role']!,
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
-                        ),
+                      SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userData['name']!,
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            userData['email']!,
+                            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                            child: Text(
+                              userData['role']!,
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+              SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => _logout(context),
+                label: Text(
+                  'Logout',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24), backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  shadowColor: Colors.redAccent.withOpacity(0.5),
+                  elevation: 5,
+                ),
+              ),
+            ],
           );
         } else {
           return Text('No data available');
@@ -236,6 +267,7 @@ class UserCard extends StatelessWidget {
     );
   }
 }
+
 
 class SearchField extends StatelessWidget {
   final TextEditingController searchController;
@@ -432,10 +464,10 @@ class ContentArea extends StatelessWidget {
       case 'Course Management':
         return UserAllocatedCoursesPage();
          case 'Live Classes':
-        return Userliveviewpage();
+        return UserLiveViewPage();
       
       default:
-        return Center(child: Text('Select a menu item.'));
+        return UserAllocatedCoursesPage();
     }
   }
 }

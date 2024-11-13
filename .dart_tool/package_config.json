@@ -182,6 +182,12 @@
       "languageVersion": "3.2"
     },
     {
+      "name": "foundation",
+      "rootUri": "file:///C:/Users/ASUS/AppData/Local/Pub/Cache/hosted/pub.dev/foundation-0.0.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "html",
       "rootUri": "file:///C:/Users/ASUS/AppData/Local/Pub/Cache/hosted/pub.dev/html-0.15.5",
       "packageUri": "lib/",
@@ -446,7 +452,7 @@
       "languageVersion": "3.5"
     }
   ],
-  "generated": "2024-11-11T06:39:12.631739Z",
+  "generated": "2024-11-13T10:17:14.954162Z",
   "generator": "pub",
   "generatorVersion": "3.5.4",
   "flutterRoot": "file:///C:/Flutter",

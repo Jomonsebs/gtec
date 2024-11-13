@@ -3,14 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Userliveviewpage extends StatefulWidget {
-  const Userliveviewpage({Key? key}) : super(key: key);
+class UserLiveViewPage extends StatefulWidget {
+  const UserLiveViewPage({Key? key}) : super(key: key);
 
   @override
-  _UserliveviewpageState createState() => _UserliveviewpageState();
+  _UserLiveViewPageState createState() => _UserLiveViewPageState();
 }
 
-class _UserliveviewpageState extends State<Userliveviewpage> {
+class _UserLiveViewPageState extends State<UserLiveViewPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -39,9 +39,11 @@ class _UserliveviewpageState extends State<Userliveviewpage> {
         appBar: AppBar(
           title: const Text('User Allocated Courses'),
           centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.blueAccent,
         ),
         body: const Center(
-          child: Text('Please log in to see your courses'),
+          child: Text('Please log in to see your courses', style: TextStyle(fontSize: 16)),
         ),
       );
     }
@@ -49,10 +51,7 @@ class _UserliveviewpageState extends State<Userliveviewpage> {
     String userId = user.uid;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Allocated Courses'),
-        centerTitle: true,
-      ),
+    
       body: StreamBuilder<QuerySnapshot>(
         stream: _getUserCourses(userId),
         builder: (context, snapshot) {
@@ -62,13 +61,13 @@ class _UserliveviewpageState extends State<Userliveviewpage> {
           final userCourses = snapshot.data!.docs;
 
           return Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16.0),
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.3,
               ),
               itemCount: userCourses.length,
               itemBuilder: (context, index) {
@@ -79,48 +78,67 @@ class _UserliveviewpageState extends State<Userliveviewpage> {
                   future: _getCourseNameById(courseId),
                   builder: (context, courseSnapshot) {
                     if (courseSnapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
+                      return const Center(child: CircularProgressIndicator());
                     }
                     if (courseSnapshot.hasData) {
                       final courseName = courseSnapshot.data!;
+
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => LiveScreenUser(courseId: courseId),
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, secondaryAnimation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: LiveScreenUser(courseId: courseId),
+                                );
+                              },
                             ),
                           );
                         },
                         child: Card(
-                          elevation: 5,
+                          elevation: 8,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Container(
-                            padding: const EdgeInsets.all(10.0),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  courseName,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                colors: [Colors.blueAccent, Colors.purpleAccent],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 12, spreadRadius: 4)
                               ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.book_online, size: 50, color: Colors.white),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    courseName,
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                          color: Colors.white,
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       );
                     } else {
-                      return const Text('Error fetching course name');
+                      return const Center(child: Text('Error fetching course name'));
                     }
                   },
                 );
@@ -147,8 +165,8 @@ class LiveScreenUser extends StatelessWidget {
         .snapshots();
   }
 
-  // Open URL in browser or app
-  Future<void> _launchURL(String url) async {
+  // Method to launch URL in the browser
+  Future<void> _launchZoomURL(String url) async {
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -161,6 +179,9 @@ class LiveScreenUser extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Live Classes for Course'),
+        elevation: 10,
+        backgroundColor: Colors.blueAccent,
+        shadowColor: Colors.blue.shade400,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _getLiveClasses(courseId),
@@ -178,20 +199,40 @@ class LiveScreenUser extends StatelessWidget {
               final liveClassName = liveClass['name'] ?? 'Unnamed Live Class';
               final zoomUrl = liveClass['zoom_url'] ?? '';
 
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                elevation: 5,
-                child: ListTile(
-                  title: Text(liveClassName),
-                  onTap: () {
-                    if (zoomUrl.isNotEmpty) {
-                      _launchURL(zoomUrl);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('No Zoom URL available')),
-                      );
-                    }
-                  },
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Card(
+                  elevation: 10,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  color: Colors.white,
+                  shadowColor: Colors.black.withOpacity(0.2),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                    title: Text(
+                      liveClassName,
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        if (zoomUrl.isNotEmpty) {
+                          _launchZoomURL(zoomUrl); // Open URL in the default browser
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No Zoom URL available')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0), backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                      ),
+                      child: const Text('Join Live Class'),
+                    ),
+                  ),
                 ),
               );
             },
