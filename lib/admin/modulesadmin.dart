@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gtech/admin/dashboard.dart';
 
 class ModuleScreen extends StatefulWidget {
   final String courseId;
 
-  const ModuleScreen({Key? key, required this.courseId}) : super(key: key);
+  const ModuleScreen({Key? key, required this.courseId, required Null Function() onBackPressed}) : super(key: key);
 
   @override
   _ModuleScreenState createState() => _ModuleScreenState();
@@ -354,7 +355,17 @@ class _ModuleScreenState extends State<ModuleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Modules')),
+appBar: AppBar(
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    onPressed: () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => DashboardScreen()), // Navigates to the AdminCourse page
+      );
+    },
+  ),
+  title: const Text('Admin Course'), // Title of the page
+),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

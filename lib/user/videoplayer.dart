@@ -12,7 +12,6 @@ class VideoPlayerScreen extends StatefulWidget {
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   late YoutubePlayerController _controller;
-  bool isFullScreen = false;
 
   @override
   void initState() {
@@ -22,11 +21,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _controller = YoutubePlayerController.fromVideoId(
       videoId: videoId ?? '',
       params: YoutubePlayerParams(
-        showControls: false, // Hide all YouTube controls (like share, volume, etc.)
-        showFullscreenButton: false, // Hide fullscreen button
-        mute: false, // Unmute video
-        loop: false, // Disable looping
-        playsInline: true, // Play inline on mobile devices
+        showControls: false,
+        showFullscreenButton: false,
+        mute: false,
+        loop: false,
+        playsInline: true,
       ),
     );
   }
@@ -39,6 +38,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Video Player'),
@@ -52,33 +53,32 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0), // Add some padding
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // Center the content vertically
-            crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
-            children: [
-              Container(
-                width: double.infinity, // Ensure full width for the player
-                height: 250, // Reduced height for the player
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12), // Rounded corners for the player
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      offset: Offset(0, 4),
-                      blurRadius: 10,
-                    ),
-                  ],
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: screenHeight * 0.7, // Increase height to 70% of screen
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        offset: Offset(0, 4),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: YoutubePlayer(
+                    controller: _controller,
+                    aspectRatio: 16 / 9,
+                  ),
                 ),
-                child: YoutubePlayer(
-                  controller: _controller,
-                  aspectRatio: 18 /11,
-                ),
-              ),
-              SizedBox(height: 20), // Add some space between the video and buttons
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
+                const SizedBox(height: 20),
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
@@ -89,9 +89,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       ),
                       onPressed: () {
                         if (_controller.value.playerState == PlayerState.playing) {
-                          _controller.pauseVideo();  // Pause video
+                          _controller.pauseVideo();
                         } else {
-                          _controller.playVideo();  // Play video
+                          _controller.playVideo();
                         }
                       },
                       color: Colors.white,
@@ -99,8 +99,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

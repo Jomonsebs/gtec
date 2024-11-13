@@ -1,3 +1,13 @@
-2024/11/13-18:00:56.388 64ec Reusing MANIFEST C:\Users\ASUS\AppData\Local\Temp\flutter_tools.5fa3102f\flutter_tools_chrome_device.69c47ed3\Default\Site Characteristics Database/MANIFEST-000001
-2024/11/13-18:00:56.389 64ec Recovering log #3
-2024/11/13-18:00:56.390 64ec Reusing old log C:\Users\ASUS\AppData\Local\Temp\flutter_tools.5fa3102f\flutter_tools_chrome_device.69c47ed3\Default\Site Characteristics Database/000003.log 
+2024/11/13-21:29:43.687 38d0 Reusing MANIFEST C:\Users\ASUS\AppData\Local\Temp\flutter_tools.7bfe94df\flutter_tools_chrome_device.662c676c\Default\Site Characteristics Database/MANIFEST-000001
+2024/11/13-21:29:43.687 38d0 Recovering log #3
+2024/11/13-21:29:43.688 38d0 Level-0 table #17: started
+2024/11/13-21:29:43.689 38d0 Level-0 table #17: 503 bytes OK
+2024/11/13-21:29:43.690 38d0 Recovering log #10
+2024/11/13-21:29:43.690 38d0 Level-0 table #18: started
+2024/11/13-21:29:43.692 38d0 Level-0 table #18: 165 bytes OK
+2024/11/13-21:29:43.692 38d0 Recovering log #14
+2024/11/13-21:29:43.692 38d0 Reusing old log C:\Users\ASUS\AppData\Local\Temp\flutter_tools.7bfe94df\flutter_tools_chrome_device.662c676c\Default\Site Characteristics Database/000014.log 
+2024/11/13-21:29:43.695 38d0 Delete type=0 #3
+2024/11/13-21:29:43.695 38d0 Delete type=2 #7
+2024/11/13-21:29:43.695 38d0 Delete type=2 #8
+2024/11/13-21:29:43.696 38d0 Delete type=0 #10

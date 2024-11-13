@@ -11,15 +11,18 @@ class AdminCourse extends StatefulWidget {
 
 class _AdminCourseState extends State<AdminCourse> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  int? selectedButton; // Track the pagination button selection state
+  String? selectedCourseId; // Variable to track selected course for ModuleScreen
+
+  // List of asset image paths
+  final List<String> courseImages = [
+    'assets/gtech.png',
+    'assets/gtech.png',
+    'assets/gtech.png',
+  ];
 
   Future<void> _addCourse(String name, String description) async {
     try {
-      final courseData = {
-        'name': name,
-        'description': description,
-      };
-
+      final courseData = {'name': name, 'description': description};
       await _firestore.collection('courses').add(courseData);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Course added successfully!')),
@@ -57,16 +60,13 @@ class _AdminCourseState extends State<AdminCourse> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
                 final String name = _nameController.text;
                 final String description = _descriptionController.text;
-
                 if (name.isNotEmpty && description.isNotEmpty) {
                   _addCourse(name, description);
                   Navigator.of(context).pop();
@@ -86,139 +86,141 @@ class _AdminCourseState extends State<AdminCourse> {
 
   @override
   Widget build(BuildContext context) {
+    // Display ModuleScreen if a course is selected, else display the course list
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView( // Add Scroll View here
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title and 'Create Course' button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Courses',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      Text(
-                        'Manage your courses here.',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  ElevatedButton(
-                    onPressed: _showAddCourseDialog,
-                    child: const Text('Create Course'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+      appBar: AppBar(title: const Text('Admin Dashboard')),
+      body: selectedCourseId == null
+          ? _buildCourseList() // Course list view
+          : ModuleScreen(
+              courseId: selectedCourseId!,
+              onBackPressed: () {
+                setState(() {
+                  selectedCourseId = null; // Go back to the course list
+                });
+              },
+            ), // ModuleScreen view
+    );
+  }
+
+  Widget _buildCourseList() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Courses',
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
+                    Text(
+                      'Manage your courses here.',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(color: Colors.grey),
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: _showAddCourseDialog,
+                  child: const Text('Create Course', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              StreamBuilder<QuerySnapshot>(
-                stream: _firestore.collection('courses').snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('courses').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  final courses = snapshot.data!.docs;
+                final courses = snapshot.data!.docs;
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: courses.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final courseDoc = entry.value;
+                    final course = courseDoc.data() as Map<String, dynamic>;
+                    final courseId = courseDoc.id;
+                    final String courseName = course['name'] ?? 'No Name';
+                    final String courseDescription = course['description'] ?? 'No Description';
+                    final String imagePath = courseImages[index % courseImages.length];
 
-                  // Display course count
-                  Text(
-                    '${courses.length} Courses',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  );
-
-                  return Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: courses.map((courseDoc) {
-                      final course = courseDoc.data() as Map<String, dynamic>;
-                      final courseId = courseDoc.id;
-
-                      // Safely handle null values with default values
-                      final String courseName = course['name'] ?? 'No Name';
-                      final String courseDescription = course['description'] ?? 'No Description';
-
-                      return GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ModuleScreen(courseId: courseId),
-                          ),
-                        ),
-                        child: Container(
-                          width: 200,
-                          height: 220,
-                          child: Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(10),
-                                    topRight: Radius.circular(10),
-                                  ),
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 120,
-                                    color: Colors.blue,
-                                    child: Center(
-                                      child: Text(
-                                        courseName,
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                        ),
+                    return GestureDetector(
+                      onTap: () => setState(() {
+                        selectedCourseId = courseId; // Set the selected course
+                      }),
+                      child: Container(
+                        width: 200,
+                        child: Card(
+                          elevation: 6,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(15),
+                                  topRight: Radius.circular(15),
+                                ),
+                                child: Image.asset(
+                                  imagePath,
+                                  width: double.infinity,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      courseName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    courseDescription,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      courseDescription,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
-            ],
-          ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 }
-
-
-
-
